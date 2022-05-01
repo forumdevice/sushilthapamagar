@@ -26,7 +26,7 @@ body::before {
   height: 100vh;
   z-index: -1;
 }
-@media (min-width: 1024px) {
+@media (min-device-width: 400px) {
   body::before {
     background-attachment: fixed;
   }
