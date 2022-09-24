@@ -33,7 +33,7 @@ body::before {
 }
 
 a {
-  color: #18d26e;
+  color:  #f7eced;
   text-decoration: none;
 }
 
@@ -1022,7 +1022,7 @@ section .container {
   }
 }
 .credits a {
-  color: #18d26e;
+  color:  #f7eced;
   transition: 0.3s;
 }
 .credits a:hover {
