@@ -50,7 +50,7 @@ h1, h2, h3, h4, h5, h6 {
 # Header
 --------------------------------------------------------------*/
 #header {
-  transition: ease-in-out 0.3s;
+  transition: ease-out 0.9s;
   position: relative;
   height: 100vh;
   display: flex;
@@ -1022,7 +1022,7 @@ section .container {
   }
 }
 .credits a {
-  color:  #f7eced;
+  color:  #212529;
   transition: 0.3s;
 }
 .credits a:hover {
