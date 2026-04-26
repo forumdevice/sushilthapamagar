@@ -1,247 +1,233 @@
 /**
-* Template Name: Personal - v4.7.0
-* Template URL: https://bootstrapmade.com/personal-free-resume-bootstrap-template/
-* Author: BootstrapMade.com
-* License: https://bootstrapmade.com/license/
+* Template Name: Personal - optimized
+* Based on: BootstrapMade Personal v4.7.0
+* Goal: Better performance, maintainability, resilience, and UX
 */
-(function() {
-  "use strict";
+(() => {
+  'use strict';
 
-  /**
-   * Easy selector helper function
-   */
-  const select = (el, all = false) => {
-    el = el.trim()
-    if (all) {
-      return [...document.querySelectorAll(el)]
-    } else {
-      return document.querySelector(el)
-    }
-  }
+  const doc = document;
+  const win = window;
+  const prefersReducedMotion = win.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  /**
-   * Easy event listener function
-   */
-  const on = (type, el, listener, all = false) => {
-    let selectEl = select(el, all)
+  const select = (selector, all = false, scope = doc) => {
+    if (!selector) return all ? [] : null;
+    return all ? Array.from(scope.querySelectorAll(selector)) : scope.querySelector(selector);
+  };
 
-    if (selectEl) {
-      if (all) {
-        selectEl.forEach(e => e.addEventListener(type, listener))
+  const on = (type, selector, handler, options = {}) => {
+    const { all = false, target = doc, listenerOptions = false } = options;
+    const elements = all ? select(selector, true, target) : [select(selector, false, target)];
+    elements.filter(Boolean).forEach((element) => {
+      element.addEventListener(type, handler, listenerOptions);
+    });
+  };
+
+  const header = select('#header');
+  const navbar = select('#navbar');
+  const navLinks = select('#navbar .nav-link', true);
+  const sections = select('section', true);
+  const mobileNavToggle = select('.mobile-nav-toggle');
+
+  const toggleMobileNav = (forceClose = false) => {
+    if (!navbar || !mobileNavToggle) return;
+
+    const shouldOpen = forceClose ? false : !navbar.classList.contains('navbar-mobile');
+    navbar.classList.toggle('navbar-mobile', shouldOpen);
+    mobileNavToggle.classList.toggle('bi-list', !shouldOpen);
+    mobileNavToggle.classList.toggle('bi-x', shouldOpen);
+    mobileNavToggle.setAttribute('aria-expanded', String(shouldOpen));
+  };
+
+  const setActiveNav = (hash) => {
+    navLinks.forEach((link) => {
+      const isActive = link.getAttribute('href') === hash;
+      link.classList.toggle('active', isActive);
+      if (isActive) {
+        link.setAttribute('aria-current', 'page');
       } else {
-        selectEl.addEventListener(type, listener)
+        link.removeAttribute('aria-current');
       }
+    });
+  };
+
+  const showSection = (hash, updateHash = true) => {
+    if (!hash || !header) return;
+
+    if (hash === '#header') {
+      header.classList.remove('header-top');
+      sections.forEach((section) => section.classList.remove('section-show'));
+      setActiveNav(hash);
+      if (updateHash && win.location.hash !== hash) {
+        history.replaceState(null, '', hash);
+      }
+      win.scrollTo({ top: 0, behavior: prefersReducedMotion ? 'auto' : 'smooth' });
+      return;
     }
+
+    const targetSection = select(hash);
+    if (!targetSection) return;
+
+    setActiveNav(hash);
+    header.classList.add('header-top');
+    sections.forEach((section) => {
+      section.classList.toggle('section-show', section === targetSection);
+    });
+
+    if (updateHash && win.location.hash !== hash) {
+      history.replaceState(null, '', hash);
+    }
+
+    win.scrollTo({ top: 0, behavior: prefersReducedMotion ? 'auto' : 'smooth' });
+  };
+
+  if (mobileNavToggle) {
+    mobileNavToggle.setAttribute('aria-expanded', 'false');
+    on('click', '.mobile-nav-toggle', () => toggleMobileNav());
   }
 
-  /**
-   * Scrolls to an element with header offset
-   */
-  const scrollto = (el) => {
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth'
-    })
-  }
+  navLinks.forEach((link) => {
+    link.addEventListener('click', (event) => {
+      const { hash } = link;
+      const targetSection = hash ? select(hash) : null;
+      if (!targetSection && hash !== '#header') return;
 
-  /**
-   * Mobile nav toggle
-   */
-  on('click', '.mobile-nav-toggle', function(e) {
-    select('#navbar').classList.toggle('navbar-mobile')
-    this.classList.toggle('bi-list')
-    this.classList.toggle('bi-x')
-  })
-
-  /**
-   * Scrool with ofset on links with a class name .scrollto
-   */
-  on('click', '#navbar .nav-link', function(e) {
-    let section = select(this.hash)
-    if (section) {
-      e.preventDefault()
-
-      let navbar = select('#navbar')
-      let header = select('#header')
-      let sections = select('section', true)
-      let navlinks = select('#navbar .nav-link', true)
-
-      navlinks.forEach((item) => {
-        item.classList.remove('active')
-      })
-
-      this.classList.add('active')
-
-      if (navbar.classList.contains('navbar-mobile')) {
-        navbar.classList.remove('navbar-mobile')
-        let navbarToggle = select('.mobile-nav-toggle')
-        navbarToggle.classList.toggle('bi-list')
-        navbarToggle.classList.toggle('bi-x')
+      event.preventDefault();
+      if (navbar?.classList.contains('navbar-mobile')) {
+        toggleMobileNav(true);
       }
+      showSection(hash || '#header');
+    });
+  });
 
-      if (this.hash == '#header') {
-        header.classList.remove('header-top')
-        sections.forEach((item) => {
-          item.classList.remove('section-show')
-        })
-        return;
-      }
+  win.addEventListener('load', () => {
+    const initialHash = win.location.hash && select(win.location.hash) ? win.location.hash : '#header';
+    showSection(initialHash, false);
+  }, { once: true });
 
-      if (!header.classList.contains('header-top')) {
-        header.classList.add('header-top')
-        setTimeout(function() {
-          sections.forEach((item) => {
-            item.classList.remove('section-show')
-          })
-          section.classList.add('section-show')
+  win.addEventListener('hashchange', () => {
+    const nextHash = win.location.hash && select(win.location.hash) ? win.location.hash : '#header';
+    showSection(nextHash, false);
+  });
 
-        }, 350);
-      } else {
-        sections.forEach((item) => {
-          item.classList.remove('section-show')
-        })
-        section.classList.add('section-show')
-      }
+  const skillsContent = select('.skills-content');
+  if (skillsContent) {
+    const progressBars = select('.progress .progress-bar', true);
+    const animateSkills = () => {
+      progressBars.forEach((bar) => {
+        const value = Number(bar.getAttribute('aria-valuenow')) || 0;
+        bar.style.width = `${Math.max(0, Math.min(100, value))}%`;
+      });
+    };
 
-      scrollto(this.hash)
-    }
-  }, true)
-
-  /**
-   * Activate/show sections on load with hash links
-   */
-  window.addEventListener('load', () => {
-    if (window.location.hash) {
-      let initial_nav = select(window.location.hash)
-
-      if (initial_nav) {
-        let header = select('#header')
-        let navlinks = select('#navbar .nav-link', true)
-
-        header.classList.add('header-top')
-
-        navlinks.forEach((item) => {
-          if (item.getAttribute('href') == window.location.hash) {
-            item.classList.add('active')
-          } else {
-            item.classList.remove('active')
+    if ('IntersectionObserver' in win) {
+      const observer = new IntersectionObserver((entries, obs) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            animateSkills();
+            obs.disconnect();
           }
-        })
-
-        setTimeout(function() {
-          initial_nav.classList.add('section-show')
-        }, 350);
-
-        scrollto(window.location.hash)
-      }
-    }
-  });
-
-  /**
-   * Skills animation
-   */
-  let skilsContent = select('.skills-content');
-  if (skilsContent) {
-    new Waypoint({
-      element: skilsContent,
-      offset: '80%',
-      handler: function(direction) {
-        let progress = select('.progress .progress-bar', true);
-        progress.forEach((el) => {
-          el.style.width = el.getAttribute('aria-valuenow') + '%'
         });
-      }
-    })
+      }, { threshold: 0.25 });
+      observer.observe(skillsContent);
+    } else if (typeof Waypoint !== 'undefined') {
+      new Waypoint({
+        element: skillsContent,
+        offset: '80%',
+        handler() {
+          animateSkills();
+          this.destroy();
+        }
+      });
+    } else {
+      animateSkills();
+    }
   }
 
-  /**
-   * Testimonials slider
-   */
-  new Swiper('.testimonials-slider', {
-    speed: 600,
-    loop: true,
-    autoplay: {
-      delay: 5000,
-      disableOnInteraction: false
-    },
-    slidesPerView: 'auto',
-    pagination: {
-      el: '.swiper-pagination',
-      type: 'bullets',
-      clickable: true
-    },
-    breakpoints: {
-      320: {
+  if (typeof Swiper !== 'undefined') {
+    const testimonialsSlider = select('.testimonials-slider');
+    if (testimonialsSlider) {
+      new Swiper(testimonialsSlider, {
+        speed: 600,
+        loop: true,
+        autoplay: prefersReducedMotion ? false : {
+          delay: 5000,
+          disableOnInteraction: false
+        },
         slidesPerView: 1,
-        spaceBetween: 20
-      },
-
-      1200: {
-        slidesPerView: 3,
-        spaceBetween: 20
-      }
+        spaceBetween: 20,
+        pagination: {
+          el: '.testimonials .swiper-pagination',
+          type: 'bullets',
+          clickable: true
+        },
+        breakpoints: {
+          1200: {
+            slidesPerView: 3,
+            spaceBetween: 20
+          }
+        }
+      });
     }
-  });
 
-  /**
-   * Porfolio isotope and filter
-   */
-  window.addEventListener('load', () => {
-    let portfolioContainer = select('.portfolio-container');
-    if (portfolioContainer) {
-      let portfolioIsotope = new Isotope(portfolioContainer, {
+    const portfolioDetailsSlider = select('.portfolio-details-slider');
+    if (portfolioDetailsSlider) {
+      new Swiper(portfolioDetailsSlider, {
+        speed: 400,
+        loop: true,
+        autoplay: prefersReducedMotion ? false : {
+          delay: 5000,
+          disableOnInteraction: false
+        },
+        pagination: {
+          el: '.portfolio-details .swiper-pagination',
+          type: 'bullets',
+          clickable: true
+        }
+      });
+    }
+  }
+
+  win.addEventListener('load', () => {
+    const portfolioContainer = select('.portfolio-container');
+    const portfolioFilters = select('#portfolio-flters li', true);
+
+    if (!portfolioContainer || !portfolioFilters.length) return;
+
+    let portfolioIsotope = null;
+    if (typeof Isotope !== 'undefined') {
+      portfolioIsotope = new Isotope(portfolioContainer, {
         itemSelector: '.portfolio-item',
         layoutMode: 'fitRows'
       });
-
-      let portfolioFilters = select('#portfolio-flters li', true);
-
-      on('click', '#portfolio-flters li', function(e) {
-        e.preventDefault();
-        portfolioFilters.forEach(function(el) {
-          el.classList.remove('filter-active');
-        });
-        this.classList.add('filter-active');
-
-        portfolioIsotope.arrange({
-          filter: this.getAttribute('data-filter')
-        });
-      }, true);
     }
 
-  });
+    portfolioFilters.forEach((filter) => {
+      filter.addEventListener('click', (event) => {
+        event.preventDefault();
+        portfolioFilters.forEach((item) => item.classList.remove('filter-active'));
+        filter.classList.add('filter-active');
 
-  /**
-   * Initiate portfolio lightbox 
-   */
-  const portfolioLightbox = GLightbox({
-    selector: '.portfolio-lightbox'
-  });
+        if (portfolioIsotope) {
+          portfolioIsotope.arrange({
+            filter: filter.getAttribute('data-filter') || '*'
+          });
+        }
+      });
+    });
+  }, { once: true });
 
-  /**
-   * Initiate portfolio details lightbox 
-   */
-  const portfolioDetailsLightbox = GLightbox({
-    selector: '.portfolio-details-lightbox',
-    width: '90%',
-    height: '90vh'
-  });
-
-  /**
-   * Portfolio details slider
-   */
-  new Swiper('.portfolio-details-slider', {
-    speed: 400,
-    loop: true,
-    autoplay: {
-      delay: 5000,
-      disableOnInteraction: false
-    },
-    pagination: {
-      el: '.swiper-pagination',
-      type: 'bullets',
-      clickable: true
+  if (typeof GLightbox !== 'undefined') {
+    if (select('.portfolio-lightbox')) {
+      GLightbox({ selector: '.portfolio-lightbox' });
     }
-  });
 
-})()
+    if (select('.portfolio-details-lightbox')) {
+      GLightbox({
+        selector: '.portfolio-details-lightbox',
+        width: '90%',
+        height: '90vh'
+      });
+    }
+  }
+})();
